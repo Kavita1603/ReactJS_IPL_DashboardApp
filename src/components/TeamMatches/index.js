@@ -19,8 +19,22 @@ class TeamMatches extends Component {
   }
 
   setRecentMatches = (formattedData, isLoading) => {
-    this.setState({recentMatchesData: formattedData, isLoading})
+    this.setState({recentMatchesData: formattedData, isLoading: !isLoading})
   }
+
+  getFormattedObject = data => ({
+    umpires: data.umpires,
+    result: data.result,
+    manOfTheMatch: data.man_of_the_match,
+    id: data.id,
+    date: data.date,
+    venue: data.venue,
+    competingTeam: data.competing_team,
+    competingTeamLogo: data.competing_team_logo,
+    firstInnings: data.first_innings,
+    secondInnings: data.second_innings,
+    matchStatus: data.match_status,
+  })
 
   getRecentMatches = async () => {
     const {match} = this.props
@@ -30,35 +44,13 @@ class TeamMatches extends Component {
     const response = await fetch(`${teamMatchesApiUrl}${id}`)
     const fetchedData = await response.json()
     const formattedData = {
-      team_banner_url: fetchedData.team_banner_url,
-      latestMatch: {
-        umpires: fetchedData.latest_match_details.umpires,
-        result: fetchedData.latest_match_details.result,
-        manOfTheMatch: fetchedData.latest_match_details.man_of_the_match,
-        id: fetchedData.latest_match_details.id,
-        date: fetchedData.latest_match_details.date,
-        venue: fetchedData.latest_match_details.venue,
-        competingTeam: fetchedData.latest_match_details.competing_team,
-        competingTeamLogo: fetchedData.latest_match_details.competing_team_logo,
-        firstInnings: fetchedData.latest_match_details.first_innings,
-        secondInnings: fetchedData.latest_match_details.second_innings,
-        matchStatus: fetchedData.latest_match_details.match_status,
-      },
-      recentMatches: fetchedData.recent_matches.map(recentMatch => ({
-        umpires: recentMatch.umpires,
-        result: recentMatch.result,
-        manOfTheMatch: recentMatch.man_of_the_match,
-        id: recentMatch.id,
-        date: recentMatch.date,
-        venue: recentMatch.venue,
-        competingTeam: recentMatch.competing_team,
-        competingTeamLogo: recentMatch.competing_team_logo,
-        firstInnings: recentMatch.first_innings,
-        secondInnings: recentMatch.second_innings,
-        matchStatus: recentMatch.match_status,
-      })),
+      teamBannerURL: fetchedData.team_banner_url,
+      latestMatch: this.getFormattedObject(fetchedData.latest_match_details),
+      recentMatches: fetchedData.recent_matches.map(recentMatch =>
+        this.getFormattedObject(recentMatch),
+      ),
     }
-    this.setRecentMatches(formattedData, false)
+    this.setRecentMatches(formattedData, true)
   }
 
   renderRecentMatchesList = () => {
@@ -79,11 +71,11 @@ class TeamMatches extends Component {
     const {params} = match
     const {id} = params
     const {recentMatchesData} = this.state
-    const {team_banner_url, latestMatch} = recentMatchesData
+    const {teamBannerURL, latestMatch} = recentMatchesData
 
     return (
       <div className="team-matches-container">
-        <img src={team_banner_url} alt="team banner" className="team-banner" />
+        <img src={teamBannerURL} alt="team banner" className="team-banner" />
         <LatestMatch latestMatchData={latestMatch} />
         {this.renderRecentMatchesList()}
       </div>
@@ -91,41 +83,21 @@ class TeamMatches extends Component {
   }
 
   renderLoader = () => (
-    <div testid="loader" className="loader-container">
+    <div data-testid="loader" className="loader-container">
       <Loader type="Oval" color="#ffffff" height="50" />
     </div>
   )
 
-  getRouteClassName = () => {
+  getTeamClassName = () => {
     const {match} = this.props
     const {params} = match
     const {id} = params
-
-    switch (id) {
-      case 'RCB':
-        return 'rcb'
-      case 'KKR':
-        return 'kkr'
-      case 'KXP':
-        return 'kxp'
-      case 'CSK':
-        return 'csk'
-      case 'RR':
-        return 'rr'
-      case 'MI':
-        return 'mi'
-      case 'SH':
-        return 'srh'
-      case 'DC':
-        return 'dc'
-      default:
-        return ''
-    }
+    return id.toLowerCase()
   }
 
   render() {
     const {isLoading} = this.state
-    const className = `team-matches-route-container ${this.getRouteClassName()}`
+    const className = `team-matches-route-container ${this.getTeamClassName()}`
 
     return (
       <div className={className}>
